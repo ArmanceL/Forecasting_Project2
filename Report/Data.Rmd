@@ -8,3 +8,17 @@ date: '2022-05-03'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Analysis of the general price of beef 
+
+Importation of the dataset:
+- Price 
+- Monthly data
+- Start from 1990 to 2021
+
+```{r}
+Beef_data <- read.csv2("../data/BeefPrice.csv")
+```
+
+```{r}
+write.csv(Beef_data,"../data/Beef_data.csv", row.names = FALSE)
+```
