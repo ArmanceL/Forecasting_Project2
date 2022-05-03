@@ -8,6 +8,20 @@ date: '2022-05-03'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, echo = FALSE, message = FALSE}
+source(here::here("scripts/setup.R"))
+```
+
+# Exploratory Data Analysis 
+
+Let's import the dataset. 
+
+```{r}
+Beef_data <- read.csv("../Data/Beef_data.csv")
+```
+
+
+
 
 ## Primary analysis of the database
 
