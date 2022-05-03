@@ -16,9 +16,9 @@ Importation of the dataset:
 - Start from 1990 to 2021
 
 ```{r}
-Beef_data <- read.csv2("../data/BeefPrice.csv")
+Beef_data <- read.csv2("../Data/BeefPrice.csv")
 ```
 
 ```{r}
-write.csv(Beef_data,"../data/Beef_data.csv", row.names = FALSE)
+write.csv(Beef_data,"../Data/Beef_data.csv", row.names = FALSE)
 ```
