@@ -1,0 +1,8 @@
+---
+title: "Report"
+output: html_document
+date: '2022-05-03'
+---
+
+```{r child = c('Intro.Rmd', 'Data.Rmd', 'EDA.Rmd', 'Analysis.Rmd', 'Concl.Rmd')}
+```
