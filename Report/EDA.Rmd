@@ -44,6 +44,7 @@ no missing values
 ...
 ...
 
+
 ```{r}
 names(Beef_data)[2] <- 'Global_price_of_beef'
 
@@ -51,15 +52,70 @@ Beef_data$Global_price_of_beef <- as.numeric(Beef_data$Global_price_of_beef)
 
 Beef_data$DATE <- as.Date(Beef_data$DATE, format = "%Y-%m-%d")
 
+
+
 Beef_data.tsibble <- Beef_data %>%
   mutate(DATE = yearmonth(DATE)) %>%
   as_tsibble(index = DATE)
 
 ```
----------------------------------------
 
 ```{r}
-Beef_data %>%
+names(Commodity_Price_index)[2] <- 'Price_index'
+
+Commodity_Price_index$Price_index<- as.numeric(Commodity_Price_index$Price_index)
+
+Commodity_Price_index$DATE<- as.Date(Commodity_Price_index$DATE, format = "%Y-%m-%d")
+
+
+
+Commodity_Price.tsibble <- Commodity_Price_index %>%
+  mutate(DATE = yearmonth(DATE)) %>%
+  as_tsibble(index = DATE)
+
+```
+
+
+```{r}
+names(Beef_US_price)[2] <- 'US_beef_price'
+
+Beef_US_price$US_beef_price<- as.numeric(Beef_US_price$US_beef_price)
+
+Beef_US_price$DATE<- as.Date(Beef_US_price$DATE, format = "%Y-%m-%d")
+
+
+
+Beef_US_price.tsibble <- Beef_US_price %>%
+  mutate(DATE = yearmonth(DATE)) %>%
+  as_tsibble(index = DATE)
+
+```
+
+
+
+```{r}
+Beef_US_production <- Beef_production_world %>%
+  filter(Entity == 'United States')
+Beef_US_production <- Beef_US_production[,-(1:2)]
+
+names(Beef_US_production)[1] <- 'DATE'
+names(Beef_US_production)[2] <- 'US_beef_production'
+
+Beef_US_production$US_beef_production<- as.numeric(Beef_US_production$US_beef_production)
+Beef_US_production$DATE<- as.numeric(Beef_US_production$DATE)
+
+Beef_US_production$DATE <- as.Date(as.character(Beef_US_production$DATE), format = "%Y")
+
+
+Beef_US_production.tsibble <- Beef_US_production %>%
+  mutate(DATE = year(DATE)) %>%
+  as_tsibble(index = DATE)
+```
+
+
+# Plotting the data
+```{r}
+Beef_data.tsibble %>%
 ggplot(aes(x = DATE, y = Global_price_of_beef)) +
       geom_point(color = "darkorchid4") +
       labs(title = "Representation of global price of beef",
@@ -68,24 +124,10 @@ ggplot(aes(x = DATE, y = Global_price_of_beef)) +
            x = "Date") + theme_bw(base_size = 15)
 ```
 ```{r}
-YEAR <- as.numeric(format(Beef_data$DATE,'%Y'))
-Month <- as.numeric(format(Beef_data$DATE,'%m'))
+#YEAR <- as.numeric(format(Beef_data$DATE,'%Y'))
+#Month <- as.numeric(format(Beef_data$DATE,'%m'))
 ```
 
-
-
-```{r}
-Beef_data %>%
-  na.omit() %>%
-ggplot(aes(x = DATE, y = Global_price_of_beef)) +
-      geom_point(color = "darkorchid4") +
-      labs(title = "Price of beef",
-           subtitle = "Use facets to plot by a variable - year in this case",
-           y = "Price",
-           x = "Date") + theme_bw(base_size = 15) +
-     # adjust the x axis breaks
-     scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
-```
 
 ```{r}
 #Beef_data %>%
@@ -103,93 +145,22 @@ ggplot(aes(x = DATE, y = Global_price_of_beef)) +
 
 
 ```{r}
-Beef_data.tsibble <- as_tsibble(Beef_data)
-Beef_data.ts <- ts(Beef_data, start = 1990, frequency = 12)
+#Beef_data.ts <- ts(Beef_data, start = 1990, frequency = 12)
 ```
 
-# Plotting the data
+
+### Plotting the data Global Price of beef in the world
 ```{r}
 Beef_data.tsibble %>% autoplot(Global_price_of_beef)+geom_line()
 ```
-
+# Plotting the data of the US beef price
 ```{r}
-p <- ggplot(Beef_data.tsibble, aes(x=DATE, y=Global_price_of_beef)) +
-  geom_line( color="steelblue") + 
-  geom_point() +
-  xlab("") +
-  scale_y_continuous()
-
-p
+Beef_US_price.tsibble %>% autoplot(US_beef_price)+geom_line()
+```
+# Plotting the data US beef production
+```{r}
+Beef_US_production.tsibble %>% autoplot(US_beef_production)+geom_line()
 ```
 
-
-
-## Decomposition of every 5 years
-```{r}
-Beef.90_95 <- filter(Beef_data, DATE >= "1990-01-01", DATE <= "1995-01-01")
-Beef.90_95 <- as_tsibble(Beef.90_95)
-p1 <- Beef.90_95%>%
-  autoplot(Global_price_of_beef)
-p1
-```
-
-```{r}
-Beef.95_00 <- filter(Beef_data, DATE >= "1995-01-01", DATE <= "2000-01-01")
-Beef.95_00<- as_tsibble(Beef.95_00)
-Beef.95_00
-p2 <- Beef.95_00%>%
-  autoplot(Global_price_of_beef)
-p2
-```
-
-```{r}
-Beef.00_05 <- filter(Beef_data, DATE >= "2000-01-01", DATE <= "2005-01-01")
-Beef.00_05<- as_tsibble(Beef.00_05)
-Beef.00_05
-p3 <- Beef.00_05%>%
-  autoplot(Global_price_of_beef)
-p3
-```
-```{r}
-Beef.05_10 <- filter(Beef_data, DATE >= "2005-01-01", DATE <= "2010-01-01")
-Beef.05_10<- as_tsibble(Beef.05_10)
-Beef.05_10
-p4 <- Beef.05_10%>%
-  autoplot(Global_price_of_beef)
-p4
-```
-```{r}
-Beef.10_15 <- filter(Beef_data, DATE >= "2010-01-01", DATE <= "2015-01-01")
-Beef.10_15<- as_tsibble(Beef.10_15)
-Beef.10_15
-p5 <- Beef.10_15%>%
-  autoplot(Global_price_of_beef)
-p5
-```
-```{r}
-Beef.15_21 <- filter(Beef_data, DATE >= "2015-01-01", DATE <= "2021-12-01")
-Beef.15_21<- as_tsibble(Beef.15_21)
-Beef.15_21
-p6 <- Beef.15_21%>%
-  autoplot(Global_price_of_beef)
-p6
-```
-
-
-
-
-
-```{r}
-plot_grid(p1, p2, p3, p4, p5, p6)
-```
-
-# Decompostion does not work 
-```{r}
-Beef.15_21 %>% decompose(type="multiplicative") %>%
-  autoplot() + xlab("Year") +
-  ggtitle("Classical multiplicative decomposition")
-# time series has no or less than 2 periods
-
-```
 
 
