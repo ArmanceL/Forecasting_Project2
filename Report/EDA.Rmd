@@ -18,6 +18,7 @@ Let's import the dataset.
 
 ```{r}
 Beef_data <- read.csv("../Data/Beef_data.csv")
+Beef_data <- read.csv("../Data/Beef_data.csv")
 ```
 
 
