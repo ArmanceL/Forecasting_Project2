@@ -17,32 +17,46 @@ source(here::here("scripts/setup.R"))
 Let's import the dataset. 
 
 ```{r}
-Beef_data <- read.csv("../Data/Beef_data.csv")
-Beef_data <- read.csv("../Data/Beef_data.csv")
+Beef_data <- read.csv2("../Data/BeefPrice.csv")
+Commodity_global_price_index <- read.csv("../Data/Commodity.price.index.csv")
+Beef_production_world <- read.csv("../Data/beef-and-buffalo-meat-production-tonnes.csv")
+Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
 ```
-
-
 
 
 ## Primary analysis of the database
 
 ```{r}
 str(Beef_data)
+str(Commodity_global_price_index)
+str(Beef_production_world)
+str(Beef_US_price)
 ```
 
 ```{r}
 which(is.na(Beef_data))
+which(is.na(Commodity_global_price_index))
+which(is.na(Beef_production_world))
+which(is.na(Beef_US_price))
 ```
 no missing values
-
-```{r}
-Beef_data$DATE <- as.Date(Beef_data$DATE,format= "%Y-%m-%d")
-```
+...
+...
+...
 
 ```{r}
 names(Beef_data)[2] <- 'Global_price_of_beef'
+
 Beef_data$Global_price_of_beef <- as.numeric(Beef_data$Global_price_of_beef)
+
+Beef_data$DATE <- as.Date(Beef_data$DATE, format = "%Y-%m-%d")
+
+Beef_data.tsibble <- Beef_data %>%
+  mutate(DATE = yearmonth(DATE)) %>%
+  as_tsibble(index = DATE)
+
 ```
+---------------------------------------
 
 ```{r}
 Beef_data %>%
