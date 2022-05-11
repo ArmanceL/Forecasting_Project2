@@ -8,7 +8,8 @@ packages <- c(
   "readr", "tidyverse", "lubridate", "tsibble", "fpp3", # for wrangling
   "ggrepel", "gghighlight", "patchwork", "maps", "scales", "tidyquant", "crosstalk", "ggpubr", "cowplot", "ggfortify",  # for plotting
   "bookdown", "rmarkdown", "knitr", "systemfonts", "kableExtra","plotly", "leaflet", "countrycode", # for the report
-  "stargazer", "corpcor", "corrplot", "ppcor", "GGally", "mctest", "pls", "factoextra", 'plyr'# for the analysis
+  "stargazer", "corpcor", "corrplot", "ppcor", "GGally", "mctest", "pls", "factoextra", 'plyr','flextable',
+  'gridExtra', 'ggplot2', 'forecast', 'fpp2','TTR','dplyr', # for the analysis
 )
 
 purrr::walk(packages, library, character.only = TRUE)
