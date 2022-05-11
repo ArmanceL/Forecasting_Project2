@@ -17,8 +17,8 @@ Importation of the dataset:
 
 ```{r}
 Beef_data <- read.csv2("../Data/BeefPrice.csv")
-Commodity_global_price.index <- read.csv("../Data/Commodity.price.index.csv")
-Beef_production.world <- read.csv("../Data/beef-and-buffalo-meat-production-tonnes.csv")
+Commodity_global_price_index <- read.csv("../Data/Commodity.price.index.csv")
+Beef_production_world <- read.csv("../Data/beef-and-buffalo-meat-production-tonnes.csv")
 Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
 ```
 
