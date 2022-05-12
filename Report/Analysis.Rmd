@@ -102,7 +102,7 @@ naive_fit$mean
 # Plot the NAIVE model
 ```{r}
 beef.fit.NAIVE <- Beef_data.tsibble %>% model(NAIVE(Global_price_of_beef))
-augment(beef.fit) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
+augment(beef.fit.NAIVE) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
 geom_line(aes(y = .fitted, colour = "Fitted")) + scale_color_manual(values = c(Data = "blue", Fitted = "orange") ) + guides(colour = guide_legend(title = "Series"))
 ```
 
@@ -115,7 +115,7 @@ snaive_fit$mean
 # Plot the SNAIVE model
 ```{r}
 beef.fit.SNAIVE <- Beef_data.tsibble %>% model(SNAIVE(Global_price_of_beef))
-augment(beef.fit) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
+augment(beef.fit.SNAIVE) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
 geom_line(aes(y = .fitted, colour = "Fitted")) + scale_color_manual(values = c(Data = "blue", Fitted = "orange") ) + guides(colour = guide_legend(title = "Series"))
 
 ```
