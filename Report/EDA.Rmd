@@ -162,6 +162,12 @@ Beef_US_price.tsibble %>% autoplot(US_beef_price)+geom_line()
 ```{r}
 Beef_US_production.tsibble %>% autoplot(US_beef_production)+geom_line()
 ```
+# Plotting the data US beef production
 
+```{r}
+Commodity_Price.tsibble %>% autoplot(Price_index)+geom_line()
+```
+
+We have to be careful, because even if the plot looks similar to the beef price, in the commodity price index, the beef price is also included, so it impacts the price index. 
 
 
