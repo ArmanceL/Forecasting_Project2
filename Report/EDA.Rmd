@@ -35,7 +35,7 @@ str(Beef_US_price)
 
 ```{r}
 which(is.na(Beef_data))
-which(is.na(Commodity_global_price_index))
+which(is.na(Commodity_Price_index))
 which(is.na(Beef_production_world))
 which(is.na(Beef_US_price))
 ```
