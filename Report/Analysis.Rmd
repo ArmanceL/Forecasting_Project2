@@ -83,7 +83,9 @@ No real pattern apparent...No cyclic or seasonal after decomposition
 
 With this non apparent pattern, we can try to apply the difference to the time serie. Making it non-sationnary could be helpful and apply an ARIMA model
 
-# Differential
+# Differencing: 
+In this, first, the log of the series is calculated, and then the series is differenced with a lagged version of itself (here, lag is of 1 time period).
+
 ```{r}
 # Apply the first difference to the dataset beef_data.tsibble
 Beef_data.tsibble %>% autoplot(log(Global_price_of_beef))
