@@ -28,7 +28,7 @@ Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
 
 ```{r}
 str(Beef_data)
-str(Commodity_global_price_index)
+str(Commodity_Price_index)
 str(Beef_production_world)
 str(Beef_US_price)
 ```
