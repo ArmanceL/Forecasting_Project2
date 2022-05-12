@@ -83,9 +83,228 @@ No real pattern apparent...No cyclic or seasonal after decomposition
 
 With this non apparent pattern, we can try to apply the difference to the time serie. Making it non-sationnary could be helpful and apply an ARIMA model
 
-# Differencing: 
-In this, first, the log of the series is calculated, and then the series is differenced with a lagged version of itself (here, lag is of 1 time period).
+----------------------------------------
 
+### Apply the basics model (NAIVE, SNAIVE, MEAN)
+
+## NAIVE model
+
+```{r}
+naive_mod <- naive(Beef_data.tsibble, h = 6)
+summary(naive_mod)
+```
+
+```{r}
+naive_fit <- naive(Beef_data.tsibble, h=12)
+naive_fit$mean
+```
+
+# Plot the NAIVE model
+```{r}
+beef.fit.NAIVE <- Beef_data.tsibble %>% model(NAIVE(Global_price_of_beef))
+augment(beef.fit) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
+geom_line(aes(y = .fitted, colour = "Fitted")) + scale_color_manual(values = c(Data = "blue", Fitted = "orange") ) + guides(colour = guide_legend(title = "Series"))
+```
+
+
+# SNAIVE model
+```{r}
+snaive_fit <- snaive(Beef_data.tsibble, h=12)
+snaive_fit$mean
+```
+# Plot the SNAIVE model
+```{r}
+beef.fit.SNAIVE <- Beef_data.tsibble %>% model(SNAIVE(Global_price_of_beef))
+augment(beef.fit) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
+geom_line(aes(y = .fitted, colour = "Fitted")) + scale_color_manual(values = c(Data = "blue", Fitted = "orange") ) + guides(colour = guide_legend(title = "Series"))
+
+```
+
+# MEAN model
+
+```{r}
+mean_model <- Beef_data.tsibble %>% model(MEAN(Global_price_of_beef)) 
+forecast_mean_model <- mean_model %>% forecast(h = 3) 
+forecast_mean_model
+```
+
+
+```{r}
+Beef_data.tsibble <- Beef_data.tsibble %>%
+  mutate(`5-MA` = slider::slide_dbl(Global_price_of_beef, mean,
+                                    .before = 2, .after = 2, .complete = TRUE))
+Beef_data.tsibble
+```
+
+```{r}
+Beef_data.tsibble <- Beef_data.tsibble %>%
+  mutate(`9-MA` = slider::slide_dbl(Global_price_of_beef, mean,
+                                    .before = 2, .after = 2, .complete = TRUE))
+Beef_data.tsibble
+```
+
+```{r}
+Beef_data.tsibble %>%
+autoplot(Global_price_of_beef) +
+autolayer(Beef_data.tsibble, `5-MA`, color='red', size = 1.2) +
+xlab("DATE") + ylab("Global_price_of_beef") + ggtitle("Global_price_of_beef")
+```
+
+```{r}
+Beef_data.tsibble %>%
+autoplot(Global_price_of_beef) +
+autolayer(Beef_data.tsibble, `9-MA`, color='red', size = 1) +
+xlab("DATE") + ylab("Global_price_of_beef") + ggtitle("Global_price_of_beef")
+```
+
+
+
+```{r}
+mean_model <- Beef_data.tsibble%>% model(MEAN(Global_price_of_beef))
+forecast_mean_model <- mean_model %>% forecast(h = 3) 
+forecast_mean_model
+```
+
+```{r}
+mean_model %>% forecast(h = 6) %>% autoplot(Beef_data.tsibble)
+```
+
+
+```{r}
+mean_model <- Beef_data.tsibble %>% model( Mean = MEAN(Global_price_of_beef),
+Naive = NAIVE(Global_price_of_beef),
+S_Naive = SNAIVE(Global_price_of_beef))
+forecast_mean_model <- mean_model %>% forecast(h = 36)
+forecast_mean_model %>% autoplot(Beef_data.tsibble, level = NULL) +
+guides(colour=guide_legend(title = "Forecast"))
+
+```
+
+# The accuracy 
+```{r}
+mean_model %>% accuracy
+beef.fit.NAIVE %>% accuracy()
+beef.fit.SNAIVE %>% accuracy()
+```
+
+
+
+```{r}
+fit <- Beef_data.tsibble %>%
+model(ETS(Global_price_of_beef ~ error("A") + trend("N", alpha = 0.1) + season("N")))
+fit %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+```
+
+
+```{r}
+fit <- Beef_data.tsibble %>%
+model(ETS(Global_price_of_beef ~ error("A") + trend("N", alpha = 0.5) + season("N")))
+fit %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+```
+
+```{r}
+fit <- Beef_data.tsibble %>%
+model(ETS(Global_price_of_beef ~ error("A") + trend("N") + season("N"), opt_crit = "mse"))
+coefficients(fit)
+```
+According to the fit, we should set alpha = 1, which is exactly equal to the naive model, so the latest observation, these attempt in ETS, NAIVE or MEAN look unrelevant...
+
+```{r}
+fit.ann <- Beef_data.tsibble %>%
+model(ETS(Global_price_of_beef ~ error("A") + trend("N", alpha = 0.99) + season("N")))
+fit.ann %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+fit.ann%>%accuracy()
+```
+
+```{r}
+fit.ann %>% forecast(h = 24) %>% autoplot(Beef_data.tsibble) +
+geom_line(aes(y = .fitted, colour = "Fitted"), data = augment(fit.ann)) +
+ylab("Global_price_of_beef") + xlab("DATE")
+```
+
+
+```{r}
+fit.A.A.N <- Beef_data.tsibble %>%
+model(ETS(Global_price_of_beef ~ error("A") + trend("A") + season("N")))
+fit.A.A.N %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+fit.A.A.N%>%accuracy()
+```
+
+```{r}
+fit.ann %>% forecast(h = 24) %>% autoplot(Beef_data.tsibble, level = 0) + 
+geom_line(aes(y = .fitted, colour = "Fitted"),
+data=augment(fit), size = 0.5)
+```
+
+```{r}
+report(fit.A.A.N)
+```
+
+```{r}
+fitAAN.<- Beef_data.tsibble %>%
+model(ETS(Global_price_of_beef ~ error("A") + trend("A",alpha = 0.9, beta = 0.01) + season("N")))
+fitAAN. %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+fitAAN.%>%accuracy()
+```
+
+```{r}
+fitAAA<- Beef_data.tsibble%>% model(
+additive = ETS(Global_price_of_beef ~ error("A") + trend("A") + season("A")))
+fc <- fitAAA %>% forecast(h = "1 years")
+fc %>% autoplot(Beef_data.tsibble, level = NULL)
+fitAAA%>%accuracy()
+```
+
+
+```{r}
+fit.AAM <- Beef_data.tsibble %>% model(
+additive = ETS(Global_price_of_beef ~ error("A") + trend("A") + season("A")), multiplicative = ETS(Global_price_of_beef ~ error("M") + trend("A") + season("M")))
+fc <- fit.AAM %>% forecast(h = "1 years")
+fc %>% autoplot(Beef_data.tsibble, level = NULL, size = c(1.2)) + xlab("DATE")
+fit.AAM%>% accuracy()
+```
+
+```{r}
+fitAAA %>% forecast(h = 24) %>% autoplot(Beef_data.tsibble) +
+geom_line(aes(y = .fitted, colour = "Fitted"), data = augment(fitAAA)) +
+ylab("Global_price_of_beef") + xlab("DATE")
+```
+
+Best accuracy result is for ETS(AAA)
+
+
+### Time series Cross Validation
+
+```{r}
+beef.data_tr <- Beef_data.tsibble %>% slice(1:(n()-1)) %>% stretch_tsibble(.init = 3, .step = 1)
+head(beef.data_tr)
+```
+
+```{r}
+fc <- beef.data_tr %>% model(NAIVE(Global_price_of_beef)) %>% forecast(h = 1)
+fc
+```
+
+```{r}
+fc %>% accuracy(Beef_data.tsibble)
+```
+
+```{r}
+fitAAA %>% accuracy()
+```
+
+The ETS model (A,A,A) is not significantly improving the most basic forecast NAIVE model
+
+
+
+- All of theses analysis demonstrate that it is extremely hard to get a good accurate forecast.
+
+-----------------------------------------------------------------------------------------------------------------
+
+
+#### Non-Stationnary forecast analysis 
+
+# Differencing the data
 ```{r}
 # Apply the first difference to the dataset beef_data.tsibble
 Beef_data.tsibble %>% autoplot(log(Global_price_of_beef))
@@ -96,15 +315,20 @@ The data transformations of differencing make this time series stationary
 
 
 ```{r}
-fit <- Beef_data.tsibble %>%
+fit.ARIMA <- Beef_data.tsibble %>%
   model(ARIMA(Global_price_of_beef))
-report(fit)
+report(fit.ARIMA)
 ```
 
 ```{r}
-fit %>% forecast(h=24) %>%
+fit.ARIMA %>% forecast(h=12) %>%
   autoplot(Beef_data.tsibble)
 ```
+
+```{r}
+fit.ARIMA %>% accuracy()
+```
+Better accuracy !
 
 ```{r}
 # acf(Beef_data.tsibble, na.action = na.pass)
@@ -116,22 +340,15 @@ Beef_data.tsibble %>%
   autoplot()
 ```
 
-```{r}
-#Fitting the AR Model to the time series
-```
-
-```{r}
-fit.beef<- Beef_data.tsibble %>% 
-  model(ARIMA(Global_price_of_beef ~ pdq(1,1,1)))
-report(fit.beef)
-```
-
 
 
 ```{r}
 Beef_data.tsibble %>%
   gg_tsdisplay(difference(Global_price_of_beef), plot_type='partial')
 ```
+
+-------------------------------------------------------------------------------------
+
 
 ```{r}
 #Beef_data.tsibble %>%
@@ -141,10 +358,6 @@ Beef_data.tsibble %>%
 ```
 
 
-```{r}
-naive_mod <- naive(Beef_data.tsibble, h = 6)
-summary(naive_mod)
-```
 
 ```{r}
 #se_model <- ses(Beef_data.tsibble, h = 12)
@@ -172,6 +385,8 @@ plot(TOTAL)
 
 #time series has no or less than 2 periods
 ```
+
+
 
 ```{r}
 
