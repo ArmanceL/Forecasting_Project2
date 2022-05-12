@@ -86,6 +86,7 @@ Beef_US_price$DATE<- as.Date(Beef_US_price$DATE, format = "%Y-%m-%d")
 
 
 Beef_US_price.tsibble <- Beef_US_price %>%
+  na.omit()%>%
   mutate(DATE = yearmonth(DATE)) %>%
   as_tsibble(index = DATE)
 
