@@ -113,6 +113,20 @@ Beef_US_production.tsibble <- Beef_US_production %>%
   as_tsibble(index = DATE)
 ```
 
+```{r}
+names(Beef_price_annual)[2] <- 'Annual_beef_price'
+
+Beef_price_annual$Annual_beef_price<- as.numeric(Beef_price_annual$Annual_beef_price)
+
+Beef_price_annual$DATE<- as.Date(Beef_price_annual$DATE, format = "%Y-%m-%d")
+
+
+
+Beef_price_annual.tsibble <- Beef_price_annual %>%
+  mutate(DATE = yearmonth(DATE)) %>%
+  as_tsibble(index = DATE)
+
+```
 
 # Plotting the data
 ```{r}
