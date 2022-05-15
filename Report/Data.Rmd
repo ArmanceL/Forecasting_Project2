@@ -20,8 +20,7 @@ Beef_data <- read.csv2("../Data/BeefPrice.csv")
 Commodity_Price_index <- read.csv("../Data/Commodity.price.index.csv")
 Beef_production_world <- read.csv("../Data/beef-and-buffalo-meat-production-tonnes.csv")
 Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
+Beef_price_annual <- read.csv('../Data/Beef_price_annual.csv')
 ```
 
-```{r}
-write.csv(Beef_data,"../Data/Beef_data.csv", row.names = FALSE)
-```
+
