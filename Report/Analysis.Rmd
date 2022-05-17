@@ -368,6 +368,7 @@ Beef_data.tsibble %>%
 ### Forecast a Time Series Regression Model
 --------------------------------------------
 
+
 ```{r}
 TOTAL <- merge(Beef_data.tsibble, Beef_US_price.tsibble, by = 'DATE')
 TOTAL$US_beef_price <- TOTAL$US_beef_price*100
@@ -381,7 +382,7 @@ ggplot(TOTAL, aes(x=DATE)) +
 plot(TOTAL)
 
 ```
-
+Can already make the assumption of positive correlation between **Global_price_of_beef** and **US_beef_price**
 
 ```{r}
 #Beef_US_Comp <- decompose(Beef_US_price.tsibble)
@@ -393,65 +394,85 @@ plot(TOTAL)
 ------------------------------------------------
 
 
+## Evolution of global price of beef with Time 
+# Global_price_of_beef VS DATE
+
+```{r}
+mod0 <- lm(Global_price_of_beef~ DATE, data = TOTAL)
+summary(mod0)
+```
+According to the regression mod0, each month, the Global price of beef would increase of 0.01180 .
+
+
+## Link: Global_price_of_beef VS US_beef_price
+
 ```{r}
 cor(TOTAL$Global_price_of_beef,TOTAL$US_beef_price)
 ```
 The correlation between the Global price and the US price is almost perfectly linear: 0.932, it is surely because the Global price of beef takes into account the price of the largest expeditors of beef, principaly based in the US. 
-Therefore, we are going to us the US data to see the correlation with the price of Corn and also the production of beef. 
 
-# Analysis of correlation
 ```{r}
 mod1 <- lm(Global_price_of_beef~ US_beef_price, data = TOTAL)
 summary(mod1)
 plot(mod1)
 ```
-Now that we know that the Global price of beef is significantly impacted by the US beef price, we are going to focus on the US_beef production
-The errors look normally distributed. 
+Now that we know that the Global price of beef is significantly impacted by the US beef price, we are going to focus on the US_beef production. Moreover, the residuals look well distributed against the fitted values. 
+
+
+## Graphical representation of Global_price_of_beef VS US_beef_price
 
 ```{r}
 ggplot(TOTAL,
 aes(x = Global_price_of_beef,
-y = US_beef_price)) + geom_point()
+y = US_beef_price)) + geom_point()+
+    geom_smooth(method="lm", se=TRUE)
 ```
-Through this graph, we can see the linear link between the variables.
 
-## Merging the Production VS Price
+
+
+### Merging the  Price VS Production
 
 Is there a link between the annual price and the annual production of beef ? Our assumption is: the more the production increases, it means the demand is higher. Therefore the more the price should increase
-
 ```{r}
 Tab2 <- merge(Beef_price_annual.tsibble, Beef_US_production.tsibble, by = 'DATE')
 ```
+
 
 ```{r}
 cor(Tab2)
 ```
 We can observe that the annual price of beef if linearly correlated (0.788) to the time (DATE) but slightly to the annual production...
 
-
+# Graphical representation of  Price VS Production
 ```{r}
 ggplot(Tab2,
 aes(x = US_beef_production,
-y = Annual_beef_price)) + geom_point()
+y = Annual_beef_price)) + geom_point()+
+    geom_smooth(method="lm", se=TRUE)
 ```
+It is a flat line in fact. Cannot conclude with the production...Volatility is also high.
 
+# Correlation  Price VS Production
 ```{r}
 cor(Tab2$Annual_beef_price,Tab2$US_beef_production)
 ```
+The correlation is of 0.112, close to 0. Is confirms the flat line
 
-
+# Regression Price against Production: Price VS Production
 ```{r}
 mod2 <- lm(Annual_beef_price ~ US_beef_production,data = Tab2)
 summary(mod2)
 ```
-Not significant 
+The result is not significant and the R squared adjusted is not satisfying. Therefore only the production is not a reliable component in order to predict the beef price. 
 
+# Regression Price against Production AND Time
 ```{r}
 mod3 <- lm(Annual_beef_price ~ .,data = Tab2)
 summary(mod3)
 ```
-But significant when it is regressed on DATE: According to the regression, each year, the price would rise of 5.61 UNIT OF BEEF.
+Here, the Annual beef price is significantly impacted with time (**DATE**) and production **US_beef_production**, but indeed, as seen before, the Time component plays a big role. It is why the production becomes significant and the R^2 this good (80.2% of the variance explained by this model).
 
+# Regression of the Time serie with TSLM: TSLM (Price ~ Production)
 ```{r}
 Tab2.ts <- as_tsibble(Tab2, index = DATE)
 Tab2.ts %>% model(TSLM(Annual_beef_price ~ US_beef_production )) %>%
@@ -459,7 +480,10 @@ report()
 ```
 Does not show a strong relationship between the production and the price in US...
 
-## Take a look at the correlation between the corn price in US and the US beef price. 
+## Take a look at the correlation between the corn price in US and the US beef price.
+After the war in Ukraine, we saw a big inflation in the every commodity product price. The rise of the beef price can be also linked with the penury of corn (princally producted in Ukraine) which has impacted the cost of production. We will take a look at the correlation of **US_beef_price** VS **US_corn_price**.
+
+# Merging the dataset : US_beef_price VS US_corn_price.
 ```{r}
 tab3 <- merge(Beef_US_price.tsibble, Corn_price_US.tsibble, by = 'DATE')
 tab3$US_beef_price <- tab3$US_beef_price *100
@@ -468,45 +492,57 @@ tab3$US_beef_price <- tab3$US_beef_price *100
 ```{r}
 cor(tab3$US_beef_price, tab3$US_corn_price)
 ```
+The correlation is of 0.583. Looks incouraging. 
 
+# Graph study: US_beef_price VS US_corn_price
 ```{r}
 ggplot(tab3,
 aes(x = US_corn_price,
-y = US_beef_price)) + geom_point()
+y = US_beef_price)) + geom_point()+
+    geom_smooth(method="lm", se=FALSE)
 ```
+Positive linear relationship indeed these two variables. 
 
+
+# Regression study: US_beef_price VS US_corn_price
 ```{r}
 mod4 <- lm(US_beef_price ~ US_corn_price, data = tab3)
 summary(mod4)
 ```
+Significant indeed, but the R^2 is low. 
 
 ```{r}
 plot(mod4)
 ```
 
-
+# TSLM study:
 ```{r}
 tab3.ts <- as_tsibble(tab3) %>% fill_gaps()
 fitTSLM <-  tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price)) %>%
 report()
 ```
+Same results
 
+# Tab of correlation representation/graph
 ```{r}
 tab3.ts %>% GGally::ggpairs(columns = 2:3)
 ```
 
+# Fitting the values on a graph
 ```{r}
 augment(fitTSLM) %>%
 ggplot(aes(x = DATE)) +
 geom_line(aes(y = US_beef_price, colour = "Data")) +
 geom_line(aes(y = .fitted, colour = "Fitted")) + xlab("Year") + ylab(NULL) + guides(colour = guide_legend(title=NULL))
 ```
-
+# Graph of Beef price VS Corn price
 ```{r}
 augment(fitTSLM) %>%
 ggplot(aes(x = US_beef_price, y = .fitted)) + geom_point() + ylab("Fitted (predicted values)") + xlab("Data (actual values)") + geom_abline(intercept = 0, slope = 1)
 ```
+Representation of how the observations are distributed around the perfect linear line. 
 
+# Graph of Beef price VS Corn price
 ```{r}
 tab3 %>%
   as.data.frame() %>%
@@ -514,10 +550,10 @@ tab3 %>%
     ylab("US_beef_price") +
     xlab("US_corn_price") +
     geom_point() +
-    geom_smooth(method="lm", se=FALSE)
+    geom_smooth(method="lm", se=TRUE)
 ```
 
-
+## Residual study of Beef price VS Corn price
 ```{r}
 fitTSLM %>% gg_tsresiduals()
 ```
@@ -526,7 +562,7 @@ This one does not work
 ```{r}
 checkresiduals(mod4)
 ```
-
+# AIC study
 ```{r}
 CV(mod4)
 ```
@@ -535,15 +571,14 @@ CV(mod4)
 
 ## Cannot make the forecast in the end...
 ```{r}
+#fit_beef <- tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price))
+#fc <- forecast(mod4)
 
-fit_beef <- tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price))
-fc <- forecast(mod4)
-
-fc %>% autoplot(US_beef_price) 
+#fc %>% autoplot(US_beef_price) 
 
 ```
 
-```{r}
+
 fit.US <- tslm(US_beef_price ~ US_corn_price, data = tab3.ts)
 h <- 4
 fcast.ave <- forecast(fit.cons,
@@ -558,16 +593,15 @@ autoplot(uschange[, "Consumption"]) +
   autolayer(fcast.up, series = "Extreme increase",
     PI = TRUE) +
   guides(colour = guide_legend(title = "Scenario"))
-```
 
-```{r}
+
+
 tab3.ts
-```
+
 
 ```{r}
 
 ```
-
 ```{r}
 
 ```
