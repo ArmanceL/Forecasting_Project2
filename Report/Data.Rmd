@@ -4,8 +4,8 @@ output: html_document
 date: '2022-05-03'
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, echo = FALSE, message = FALSE}
+source("../scripts/setup.R")
 ```
 
 ## Analysis of the general price of beef 
