@@ -364,6 +364,9 @@ Beef_data.tsibble %>%
 #summary(se_model)
 ```
 
+--------------------------------------------
+### Forecast a Time Series Regression Model
+--------------------------------------------
 
 ```{r}
 TOTAL <- merge(Beef_data.tsibble, Beef_US_price.tsibble, by = 'DATE')
@@ -387,6 +390,169 @@ plot(TOTAL)
 ```
 
 
+------------------------------------------------
+
+
+```{r}
+cor(TOTAL$Global_price_of_beef,TOTAL$US_beef_price)
+```
+
+
+```{r}
+mod1 <- lm(Global_price_of_beef~ US_beef_price, data = TOTAL)
+summary(mod1)
+plot(mod1)
+```
+Now that we know that the Global price of beef is significantly impacted by the US beef price, we are going to focus on the US_beef production
+
+
+```{r}
+ggplot(TOTAL,
+aes(x = Global_price_of_beef,
+y = US_beef_price)) + geom_point()
+```
+
+```{r}
+Tab2 <- merge(Beef_price_annual.tsibble, Beef_US_production.tsibble, by = 'DATE')
+```
+
+
+```{r}
+cor(Tab2)
+```
+
+```{r}
+ggplot(Tab2,
+aes(x = US_beef_production,
+y = Annual_beef_price)) + geom_point()
+```
+
+```{r}
+cor(Tab2$Annual_beef_price,Tab2$US_beef_production)
+```
+
+
+```{r}
+mod2 <- lm(Annual_beef_price ~ US_beef_production,data = Tab2)
+summary(mod2)
+```
+```{r}
+mod3 <- lm(Annual_beef_price ~ .,data = Tab2)
+summary(mod3)
+```
+
+
+```{r}
+Tab2.ts <- as_tsibble(Tab2, index = DATE)
+Tab2.ts %>% model(TSLM(Annual_beef_price ~ US_beef_production )) %>%
+report()
+```
+Does not show a strong relationship between the production and the price in US...
+
+## Take a look at the correlation between the corn price in US and the US beef price. 
+```{r}
+tab3 <- merge(Beef_US_price.tsibble, Corn_price_US.tsibble, by = 'DATE')
+tab3$US_beef_price <- tab3$US_beef_price *100
+```
+
+```{r}
+cor(tab3$US_beef_price, tab3$US_corn_price)
+```
+
+```{r}
+ggplot(tab3,
+aes(x = US_corn_price,
+y = US_beef_price)) + geom_point()
+```
+
+```{r}
+mod4 <- lm(US_beef_price ~ US_corn_price, data = tab3)
+summary(mod4)
+```
+
+```{r}
+plot(mod4)
+```
+
+
+```{r}
+tab3.ts <- as_tsibble(tab3) %>% fill_gaps()
+fitTSLM <-  tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price)) %>%
+report()
+```
+
+```{r}
+tab3.ts %>% GGally::ggpairs(columns = 2:3)
+```
+
+```{r}
+augment(fitTSLM) %>%
+ggplot(aes(x = DATE)) +
+geom_line(aes(y = US_beef_price, colour = "Data")) +
+geom_line(aes(y = .fitted, colour = "Fitted")) + xlab("Year") + ylab(NULL) + guides(colour = guide_legend(title=NULL))
+```
+
+```{r}
+augment(fitTSLM) %>%
+ggplot(aes(x = US_beef_price, y = .fitted)) + geom_point() + ylab("Fitted (predicted values)") + xlab("Data (actual values)") + geom_abline(intercept = 0, slope = 1)
+```
+
+```{r}
+tab3 %>%
+  as.data.frame() %>%
+  ggplot(aes(x=US_corn_price, y=US_beef_price)) +
+    ylab("US_beef_price") +
+    xlab("US_corn_price") +
+    geom_point() +
+    geom_smooth(method="lm", se=FALSE)
+```
+
+
+```{r}
+fitTSLM %>% gg_tsresiduals()
+```
+
+This one does not work
+```{r}
+checkresiduals(mod4)
+```
+
+```{r}
+CV(mod4)
+```
+
+
+
+## Cannot make the forecast in the end...
+```{r}
+
+fit_beef <- tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price))
+fc <- forecast(mod4)
+
+fc %>% autoplot(US_beef_price) 
+
+```
+
+```{r}
+fit.US <- tslm(US_beef_price ~ US_corn_price, data = tab3.ts)
+h <- 4
+fcast.ave <- forecast(fit.cons,
+  newdata = data.frame(
+    Income = rep(mean(uschange[,"Income"]), h)))
+fcast.up <- forecast(fit.cons,
+  newdata = data.frame(Income = rep(5, h)))
+autoplot(uschange[, "Consumption"]) +
+  ylab("% change in US consumption") +
+  autolayer(fcast.ave, series = "Average increase",
+    PI = TRUE) +
+  autolayer(fcast.up, series = "Extreme increase",
+    PI = TRUE) +
+  guides(colour = guide_legend(title = "Scenario"))
+```
+
+```{r}
+tab3.ts
+```
 
 ```{r}
 
