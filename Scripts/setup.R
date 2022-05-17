@@ -46,4 +46,3 @@ opts_chunk$set(
   echo = FALSE
 )
 
-install.packages('mctest')
