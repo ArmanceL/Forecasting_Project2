@@ -20,6 +20,7 @@ Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
 Corn_price_US <- read.csv('../Data/corn_price_US.csv')
 Corn_price <- read_delim('../Data/corn-prices-historical-chart-data.csv', 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
+Beef_consumption <- read_csv('../Data/Beef_consumption.csv')
 ```
 
 
@@ -156,6 +157,26 @@ Corn_price.tsibble <- Corn_price %>%
 ```
 
 
+```{r}
+US_Beef_consumption <- Beef_consumption %>%
+  filter(LOCATION == 'USA')
+US_Beef_consumption <- US_Beef_consumption[,-(1:5)]
+US_Beef_consumption <- US_Beef_consumption[,-3]
+
+names(US_Beef_consumption)[1] <- 'DATE'
+names(US_Beef_consumption)[2] <- 'US_beef_consumption'
+
+US_Beef_consumption$US_beef_consumption<- as.numeric(US_Beef_consumption$US_beef_consumption)
+US_Beef_consumption$DATE<- as.numeric(US_Beef_consumption$DATE)
+
+US_Beef_consumption$DATE <- as.Date(as.character(US_Beef_consumption$DATE), format = "%Y")
+
+
+US_Beef_consumption.ts <- US_Beef_consumption %>%
+  mutate(DATE = year(DATE)) %>%
+  as_tsibble(index = DATE)
+```
+
 -------------------------------------------------------------------
 
 
@@ -197,20 +218,22 @@ ggplot(aes(x = DATE, y = Global_price_of_beef)) +
 ```
 
 
-### Plotting the data Global Price of beef in the world
+# Plotting the data Global Price of beef in the world
 ```{r}
 Beef_data.tsibble %>% autoplot(Global_price_of_beef)+geom_line()
 ```
+
 # Plotting the data of the US beef price
 ```{r}
 Beef_US_price.tsibble %>% autoplot(US_beef_price)+geom_line()
 ```
+
 # Plotting the data US beef production
 ```{r}
 Beef_US_production.tsibble %>% autoplot(US_beef_production)+geom_line()
 ```
-# Plotting the data US beef production
 
+# Plotting the data US beef production
 ```{r}
 Commodity_Price.tsibble %>% autoplot(Price_index)+geom_line()
 ```
@@ -227,5 +250,9 @@ Corn_price.tsibble %>% autoplot(log(corn_price))+geom_line()
 Corn_price_US.tsibble %>% autoplot((US_corn_price))+geom_line()
 ```
 
+# Ploting kg/capita US consumption
+```{r}
+US_Beef_consumption.ts%>% autoplot(US_beef_consumption) + geom_line()
+```
 
 
