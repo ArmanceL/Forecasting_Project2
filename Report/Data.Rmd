@@ -24,6 +24,7 @@ Beef_price_annual <- read.csv('../Data/Beef_price_annual.csv')
 Corn_price_US <- read.csv('../Data/corn_price_US.csv')
 Corn_price <- read_delim('../Data/corn-prices-historical-chart-data.csv', 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
+Beef_consumption <- read_csv('../Data/Beef_consumption.csv')
 ```
 
 
