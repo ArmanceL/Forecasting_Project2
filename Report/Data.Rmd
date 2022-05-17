@@ -22,7 +22,7 @@ Beef_production_world <- read.csv("../Data/beef-and-buffalo-meat-production-tonn
 Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
 Beef_price_annual <- read.csv('../Data/Beef_price_annual.csv')
 Corn_price_US <- read.csv('../Data/corn_price_US.csv')
-Corn_price <- read_delim('../Data/corn-prices-historical-chart-data.csv'), 
+Corn_price <- read_delim('../Data/corn-prices-historical-chart-data.csv', 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 ```
 
