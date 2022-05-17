@@ -21,6 +21,8 @@ Beef_data <- read.csv2("../Data/BeefPrice.csv")
 Commodity_Price_index <- read.csv("../Data/Commodity.price.index.csv")
 Beef_production_world <- read.csv("../Data/beef-and-buffalo-meat-production-tonnes.csv")
 Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
+Corn_price_US <- read.csv('../Data/corn_price_US.csv')
+Corn_price <- read.csv('../Data/corn-prices-historical-chart-data.csv')
 ```
 
 
@@ -128,7 +130,41 @@ Beef_price_annual.tsibble <- Beef_price_annual %>%
 
 ```
 
-# Plotting the data
+```{r}
+names(Corn_price_US)[2] <- 'US_corn_price'
+
+Corn_price_US$US_corn_price<- as.numeric(Corn_price_US$US_corn_price)
+
+Corn_price_US$DATE<- as.Date(Corn_price_US$DATE, format = "%Y-%m-%d")
+
+
+
+Corn_price_US.tsibble <- Corn_price_US %>%
+  mutate(DATE = yearmonth(DATE)) %>%
+  as_tsibble(index = DATE)
+
+```
+
+```{r}
+names(Corn_price)[2] <- 'corn_price'
+
+Corn_price$corn_price<- as.numeric(Corn_price$corn_price)
+
+Corn_price$date<- as.Date(Corn_price$date, format = "%Y-%m-%d")
+
+
+
+Corn_price.tsibble <- Corn_price %>%
+  as_tsibble(index = date)
+```
+
+
+-------------------------------------------------------------------
+
+
+
+
+### Plotting the data
 ```{r}
 Beef_data.tsibble %>%
 ggplot(aes(x = DATE, y = Global_price_of_beef)) +
@@ -181,7 +217,18 @@ Beef_US_production.tsibble %>% autoplot(US_beef_production)+geom_line()
 ```{r}
 Commodity_Price.tsibble %>% autoplot(Price_index)+geom_line()
 ```
-
 We have to be careful, because even if the plot looks similar to the beef price, in the commodity price index, the beef price is also included, so it impacts the price index. 
+
+
+# Plotting the Global Corn price
+```{r}
+Corn_price.tsibble %>% autoplot(log(corn_price))+geom_line()
+```
+
+# Ploting US corn price
+```{r}
+Corn_price_US.tsibble %>% autoplot((US_corn_price))+geom_line()
+```
+
 
 
