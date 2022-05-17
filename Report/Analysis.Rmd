@@ -396,30 +396,38 @@ plot(TOTAL)
 ```{r}
 cor(TOTAL$Global_price_of_beef,TOTAL$US_beef_price)
 ```
+The correlation between the Global price and the US price is almost perfectly linear: 0.932, it is surely because the Global price of beef takes into account the price of the largest expeditors of beef, principaly based in the US. 
+Therefore, we are going to us the US data to see the correlation with the price of Corn and also the production of beef. 
 
-
+# Analysis of correlation
 ```{r}
 mod1 <- lm(Global_price_of_beef~ US_beef_price, data = TOTAL)
 summary(mod1)
 plot(mod1)
 ```
 Now that we know that the Global price of beef is significantly impacted by the US beef price, we are going to focus on the US_beef production
-
+The errors look normally distributed. 
 
 ```{r}
 ggplot(TOTAL,
 aes(x = Global_price_of_beef,
 y = US_beef_price)) + geom_point()
 ```
+Through this graph, we can see the linear link between the variables.
+
+## Merging the Production VS Price
+
+Is there a link between the annual price and the annual production of beef ? Our assumption is: the more the production increases, it means the demand is higher. Therefore the more the price should increase
 
 ```{r}
 Tab2 <- merge(Beef_price_annual.tsibble, Beef_US_production.tsibble, by = 'DATE')
 ```
 
-
 ```{r}
 cor(Tab2)
 ```
+We can observe that the annual price of beef if linearly correlated (0.788) to the time (DATE) but slightly to the annual production...
+
 
 ```{r}
 ggplot(Tab2,
@@ -436,11 +444,13 @@ cor(Tab2$Annual_beef_price,Tab2$US_beef_production)
 mod2 <- lm(Annual_beef_price ~ US_beef_production,data = Tab2)
 summary(mod2)
 ```
+Not significant 
+
 ```{r}
 mod3 <- lm(Annual_beef_price ~ .,data = Tab2)
 summary(mod3)
 ```
-
+But significant when it is regressed on DATE: According to the regression, each year, the price would rise of 5.61 UNIT OF BEEF.
 
 ```{r}
 Tab2.ts <- as_tsibble(Tab2, index = DATE)
