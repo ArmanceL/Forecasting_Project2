@@ -9,16 +9,29 @@ source("../scripts/setup.R")
 ```
 
 
-### For this first analysis, we are going to focus on the dataset Beef_data
+-------------------------------------------------------------------
 
-We want to know if we can forecast the global price of beef just with the historical data.
-### Plotting the data Global Price of beef in the world
+NOUVEAU / ANALYSIS
+
+-------------------------------------------------------------------
+
+
+
+
+
+
+### For this first analysis, we are going to focus on the dataset Beef_US_price 
+
+We want to know if we can forecast the US price of beef ust with the historical data. Going from jan 1984 to march 2022 (458 observations)
+
+### Plotting the data US beef price (Converted to US Dollars per pounds = 453.6 grams)
+
 ```{r}
-Beef_data.tsibble %>% autoplot(Global_price_of_beef)+geom_line()
+Beef_US_price.tsibble %>% autoplot(US_beef_price)+geom_line()
 ```
 
 ```{r}
-p <- ggplot(Beef_data.tsibble, aes(x=DATE, y=Global_price_of_beef)) +
+p <- ggplot(Beef_US_price.tsibble, aes(x=DATE, y=US_beef_price)) +
   geom_line( color="steelblue") + 
   geom_point() +
   xlab("") +
@@ -27,50 +40,9 @@ p <- ggplot(Beef_data.tsibble, aes(x=DATE, y=Global_price_of_beef)) +
 p
 ```
 
-
-
-## Decomposition of every 5 years
-```{r}
-Beef.90_95 <- filter(Beef_data, DATE >= "1990-01-01", DATE <= "1995-01-01")
-Beef.90_95 <- as_tsibble(Beef.90_95)
-p1 <- Beef.90_95%>%
-  autoplot(Global_price_of_beef)
-
-Beef.95_00 <- filter(Beef_data, DATE >= "1995-01-01", DATE <= "2000-01-01")
-Beef.95_00<- as_tsibble(Beef.95_00)
-p2 <- Beef.95_00%>%
-  autoplot(Global_price_of_beef)
-
-Beef.00_05 <- filter(Beef_data, DATE >= "2000-01-01", DATE <= "2005-01-01")
-Beef.00_05<- as_tsibble(Beef.00_05)
-p3 <- Beef.00_05%>%
-  autoplot(Global_price_of_beef)
-
-Beef.05_10 <- filter(Beef_data, DATE >= "2005-01-01", DATE <= "2010-01-01")
-Beef.05_10<- as_tsibble(Beef.05_10)
-p4 <- Beef.05_10%>%
-  autoplot(Global_price_of_beef)
-
-Beef.10_15 <- filter(Beef_data, DATE >= "2010-01-01", DATE <= "2015-01-01")
-Beef.10_15<- as_tsibble(Beef.10_15)
-p5 <- Beef.10_15%>%
-  autoplot(Global_price_of_beef)
-
-Beef.15_21 <- filter(Beef_data, DATE >= "2015-01-01", DATE <= "2021-12-01")
-Beef.15_21<- as_tsibble(Beef.15_21)
-p6 <- Beef.15_21%>%
-  autoplot(Global_price_of_beef)
-```
-
-```{r}
-plot_grid(p1, p2, p3, p4, p5, p6)
-```
-No real pattern apparent...No cyclic or seasonal after decomposition
-
-
 # Decompostion does not work 
 ```{r}
-#Beef.15_21 %>% decompose(type="multiplicative") %>%
+#Beef_US_price.tsibble %>% decompose(type="multiplicative") %>%
   #autoplot() + xlab("Year") +
   #ggtitle("Classical multiplicative decomposition")
 # time series has no or less than 2 periods
@@ -78,7 +50,7 @@ No real pattern apparent...No cyclic or seasonal after decomposition
 ```
 
 ```{r}
-#beef_Comp <- decompose(Beef_data.tsibble)
+#beef_Comp <- decompose(Beef_US_price.tsibble)
 ```
 
 With this non apparent pattern, we can try to apply the difference to the time serie. Making it non-sationnary could be helpful and apply an ARIMA model
@@ -90,92 +62,42 @@ With this non apparent pattern, we can try to apply the difference to the time s
 ## NAIVE model
 
 ```{r}
-naive_mod <- naive(Beef_data.tsibble, h = 6)
+naive_mod <- naive(Beef_US_price.tsibble, h = 12)
 summary(naive_mod)
 ```
 
 ```{r}
-naive_fit <- naive(Beef_data.tsibble, h=12)
-naive_fit$mean
-```
-
-# Plot the NAIVE model
-```{r}
-beef.fit.NAIVE <- Beef_data.tsibble %>% model(NAIVE(Global_price_of_beef))
-augment(beef.fit.NAIVE) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
-geom_line(aes(y = .fitted, colour = "Fitted")) + scale_color_manual(values = c(Data = "blue", Fitted = "orange") ) + guides(colour = guide_legend(title = "Series"))
+naive_mod %>% autoplot()
 ```
 
 
 # SNAIVE model
 ```{r}
-snaive_fit <- snaive(Beef_data.tsibble, h=12)
+snaive_fit <- snaive(Beef_US_price.tsibble, h=12)
 snaive_fit$mean
-```
-# Plot the SNAIVE model
-```{r}
-beef.fit.SNAIVE <- Beef_data.tsibble %>% model(SNAIVE(Global_price_of_beef))
-augment(beef.fit.SNAIVE) %>% ggplot(aes(x = DATE)) + geom_line(aes(y = Global_price_of_beef, colour = "Data")) +
-geom_line(aes(y = .fitted, colour = "Fitted")) + scale_color_manual(values = c(Data = "blue", Fitted = "orange") ) + guides(colour = guide_legend(title = "Series"))
-
+snaive_fit %>% autoplot()
 ```
 
 # MEAN model
 
-```{r}
-mean_model <- Beef_data.tsibble %>% model(MEAN(Global_price_of_beef)) 
-forecast_mean_model <- mean_model %>% forecast(h = 3) 
-forecast_mean_model
-```
-
 
 ```{r}
-Beef_data.tsibble <- Beef_data.tsibble %>%
-  mutate(`5-MA` = slider::slide_dbl(Global_price_of_beef, mean,
-                                    .before = 2, .after = 2, .complete = TRUE))
-Beef_data.tsibble
-```
-
-```{r}
-Beef_data.tsibble <- Beef_data.tsibble %>%
-  mutate(`9-MA` = slider::slide_dbl(Global_price_of_beef, mean,
-                                    .before = 2, .after = 2, .complete = TRUE))
-Beef_data.tsibble
-```
-
-```{r}
-Beef_data.tsibble %>%
-autoplot(Global_price_of_beef) +
-autolayer(Beef_data.tsibble, `5-MA`, color='red', size = 1.2) +
-xlab("DATE") + ylab("Global_price_of_beef") + ggtitle("Global_price_of_beef")
-```
-
-```{r}
-Beef_data.tsibble %>%
-autoplot(Global_price_of_beef) +
-autolayer(Beef_data.tsibble, `9-MA`, color='red', size = 1) +
-xlab("DATE") + ylab("Global_price_of_beef") + ggtitle("Global_price_of_beef")
-```
-
-
-
-```{r}
-mean_model <- Beef_data.tsibble%>% model(MEAN(Global_price_of_beef))
-forecast_mean_model <- mean_model %>% forecast(h = 3) 
+mean_model <- Beef_US_price.tsibble%>% model(MEAN(US_beef_price))
+forecast_mean_model <- mean_model %>% forecast(h = 12) 
 forecast_mean_model
 ```
 
 ```{r}
-mean_model %>% forecast(h = 6) %>% autoplot(Beef_data.tsibble)
+mean_model %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble)
 ```
 
 
 ```{r}
-mean_model <- Beef_data.tsibble %>% model( Mean = MEAN(Global_price_of_beef),
-Naive = NAIVE(Global_price_of_beef),
-S_Naive = SNAIVE(Global_price_of_beef))
-forecast_mean_model <- mean_model %>% forecast(h = 36)
-forecast_mean_model %>% autoplot(Beef_data.tsibble, level = NULL) +
+mean_model <- Beef_US_price.tsibble %>% model( Mean = MEAN(US_beef_price),
+Naive = NAIVE(US_beef_price),
+S_Naive = SNAIVE(US_beef_price))
+forecast_mean_model <- mean_model %>% forecast(h = 12)
+forecast_mean_model %>% autoplot(Beef_US_price.tsibble) +
 guides(colour=guide_legend(title = "Forecast"))
 
 ```
@@ -183,91 +105,95 @@ guides(colour=guide_legend(title = "Forecast"))
 # The accuracy 
 ```{r}
 mean_model %>% accuracy
-beef.fit.NAIVE %>% accuracy()
-beef.fit.SNAIVE %>% accuracy()
+naive_mod %>% accuracy()
+snaive_fit%>% accuracy()
 ```
-
+The Naive model looks the best.
 
 
 ```{r}
-fit <- Beef_data.tsibble %>%
-model(ETS(Global_price_of_beef ~ error("A") + trend("N", alpha = 0.1) + season("N")))
-fit %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+checkresiduals(naive(Beef_US_price.tsibble))
 ```
 
 
+----------------------------------------------
+
+
+### ETS MODEL:
+
+
 ```{r}
-fit <- Beef_data.tsibble %>%
-model(ETS(Global_price_of_beef ~ error("A") + trend("N", alpha = 0.5) + season("N")))
-fit %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+fit.ANN <- Beef_US_price.tsibble %>%
+  na.interp(Beef_US_price.tsibble)%>%
+  model(ETS(US_beef_price ~ error("A") + trend("N") + season("N")))
+
+fit.ANN %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble) + theme(legend.position = "none")
+fit.ANN %>% accuracy()
 ```
 
 ```{r}
-fit <- Beef_data.tsibble %>%
-model(ETS(Global_price_of_beef ~ error("A") + trend("N") + season("N"), opt_crit = "mse"))
-coefficients(fit)
+fit..ANN <- Beef_US_price.tsibble %>%
+model(ETS(US_beef_price ~ error("A") + trend("N") + season("N"), opt_crit = "mse"))
+coefficients(fit..ANN)
 ```
 According to the fit, we should set alpha = 1, which is exactly equal to the naive model, so the latest observation, these attempt in ETS, NAIVE or MEAN look unrelevant...
 
 ```{r}
-fit.ann <- Beef_data.tsibble %>%
-model(ETS(Global_price_of_beef ~ error("A") + trend("N", alpha = 0.99) + season("N")))
-fit.ann %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
-fit.ann%>%accuracy()
+FIT.ANN <- Beef_US_price.tsibble %>%
+model(ETS(US_beef_price ~ error("A") + trend("N", alpha = 0.99) + season("N")))
+FIT.ANN %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble) + theme(legend.position = "none")
+FIT.ANN%>%accuracy()
 ```
 
 ```{r}
-fit.ann %>% forecast(h = 24) %>% autoplot(Beef_data.tsibble) +
-geom_line(aes(y = .fitted, colour = "Fitted"), data = augment(fit.ann)) +
-ylab("Global_price_of_beef") + xlab("DATE")
+FIT.ANN %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble) +
+geom_line(aes(y = .fitted, colour = "Fitted"), data = augment(FIT.ANN)) +
+ylab("US_Beef_price") + xlab("DATE")
 ```
 
 
 ```{r}
-fit.A.A.N <- Beef_data.tsibble %>%
-model(ETS(Global_price_of_beef ~ error("A") + trend("A") + season("N")))
-fit.A.A.N %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+fit.A.A.N <- Beef_US_price.tsibble %>%
+model(ETS(US_beef_price ~ error("A") + trend("A") + season("N")))
+fit.A.A.N %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble) + theme(legend.position = "none")
 fit.A.A.N%>%accuracy()
 ```
-
-```{r}
-fit.ann %>% forecast(h = 24) %>% autoplot(Beef_data.tsibble, level = 0) + 
-geom_line(aes(y = .fitted, colour = "Fitted"),
-data=augment(fit), size = 0.5)
-```
+Accuracy of 6.26  fit.A.A.N
 
 ```{r}
 report(fit.A.A.N)
 ```
 
 ```{r}
-fitAAN.<- Beef_data.tsibble %>%
-model(ETS(Global_price_of_beef ~ error("A") + trend("A",alpha = 0.9, beta = 0.01) + season("N")))
-fitAAN. %>% forecast(h = 36) %>% autoplot(Beef_data.tsibble, level = 0) + theme(legend.position = "none")
+fitAAN.<- Beef_US_price.tsibble %>%
+model(ETS(US_beef_price ~ error("A") + trend("A",alpha = 0.995, beta = 0.00477) + season("N")))
+fitAAN. %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble) + theme(legend.position = "none")
 fitAAN.%>%accuracy()
 ```
 
 ```{r}
-fitAAA<- Beef_data.tsibble%>% model(
-additive = ETS(Global_price_of_beef ~ error("A") + trend("A") + season("A")))
+fitAAA<- Beef_US_price.tsibble%>% model(
+additive = ETS(US_beef_price ~ error("A") + trend("A") + season("A")))
 fc <- fitAAA %>% forecast(h = "1 years")
-fc %>% autoplot(Beef_data.tsibble, level = NULL)
+fc %>% autoplot(Beef_US_price.tsibble)
 fitAAA%>%accuracy()
 ```
 
 
 ```{r}
-fit.AAM <- Beef_data.tsibble %>% model(
-additive = ETS(Global_price_of_beef ~ error("A") + trend("A") + season("A")), multiplicative = ETS(Global_price_of_beef ~ error("M") + trend("A") + season("M")))
+fit.AAM <- Beef_US_price.tsibble %>% model(
+additive = ETS(US_beef_price ~ error("A") + trend("A") + season("A")), multiplicative = ETS(US_beef_price ~ error("M") + trend("A") + season("M")))
 fc <- fit.AAM %>% forecast(h = "1 years")
-fc %>% autoplot(Beef_data.tsibble, level = NULL, size = c(1.2)) + xlab("DATE")
+fc %>% autoplot(Beef_US_price.tsibble, size = c(1.2)) + xlab("DATE")
 fit.AAM%>% accuracy()
 ```
 
+# FINAL MODEL ETS with best accuracy
+
 ```{r}
-fitAAA %>% forecast(h = 24) %>% autoplot(Beef_data.tsibble) +
+fitAAA %>% forecast(h = 12) %>% autoplot(Beef_US_price.tsibble) +
 geom_line(aes(y = .fitted, colour = "Fitted"), data = augment(fitAAA)) +
-ylab("Global_price_of_beef") + xlab("DATE")
+ylab("US_beef_price") + xlab("DATE")
 ```
 
 Best accuracy result is for ETS(AAA)
@@ -276,17 +202,17 @@ Best accuracy result is for ETS(AAA)
 ### Time series Cross Validation
 
 ```{r}
-beef.data_tr <- Beef_data.tsibble %>% slice(1:(n()-1)) %>% stretch_tsibble(.init = 3, .step = 1)
-head(beef.data_tr)
+beef.US_tr <- Beef_US_price.tsibble %>% slice(1:(n()-1)) %>% stretch_tsibble(.init = 3, .step = 1)
+head(beef.US_tr)
 ```
 
 ```{r}
-fc <- beef.data_tr %>% model(NAIVE(Global_price_of_beef)) %>% forecast(h = 1)
+fc <- beef.US_tr %>% model(NAIVE(US_beef_price)) %>% forecast(h = 1)
 fc
 ```
 
 ```{r}
-fc %>% accuracy(Beef_data.tsibble)
+fc %>% accuracy(Beef_US_price.tsibble)
 ```
 
 ```{r}
@@ -307,20 +233,17 @@ The ETS model (A,A,A) is not significantly improving the most basic forecast NAI
 # Differencing the data
 ```{r}
 # Apply the first difference to the dataset beef_data.tsibble
-Beef_data.tsibble %>% autoplot(log(Global_price_of_beef))
-Beef.diff <- Beef_data.tsibble %>% autoplot(log(Global_price_of_beef) %>% difference())
-Beef.diff
+Beef_US_price.tsibble %>% autoplot(log(US_beef_price))
+Beef_US.diff <- Beef_US_price.tsibble %>% autoplot(log(US_beef_price) %>% difference())
+Beef_US.diff
 ```
 The data transformations of differencing make this time series stationary
 
 
+### AUTO ARIMA model:
+
 ```{r}
-fit.ARIMA <- Beef_data.tsibble %>%
-  model(ARIMA(Global_price_of_beef))
-report(fit.ARIMA)
-```
-```{r}
-beefTS = ts(Beef_data)
+beefTS = ts(Beef_US_price)
 arima_fit = auto.arima(beefTS[,1])
 plot(beefTS[,2])
 arima_fit = auto.arima(beefTS[,2])
@@ -329,75 +252,23 @@ plot(arima_forecast)
 ```
 
 ```{r}
-fit.ARIMA %>% forecast(h=12) %>%
-  autoplot(Beef_data.tsibble)
-```
-
-```{r}
-fit.ARIMA %>% accuracy()
+arima_fit %>% accuracy()
 ```
 Better accuracy !
 
 ```{r}
-# acf(Beef_data.tsibble, na.action = na.pass)
-```
-
-```{r}
-Beef_data.tsibble %>%
-  ACF(Global_price_of_beef) %>%
-  autoplot()
-```
-
-
-
-```{r}
-Beef_data.tsibble %>%
-  gg_tsdisplay(difference(Global_price_of_beef), plot_type='partial')
+Beef_US_price.tsibble %>%
+  gg_tsdisplay(difference(US_beef_price), plot_type='partial')
 ```
 
 -------------------------------------------------------------------------------------
 
 
-```{r}
-#Beef_data.tsibble %>%
-  #forecast(h=5) %>%
-  #filter(.model=='search') %>%
-  #autoplot(Global_price_of_beef)
-```
-
-
-
-```{r}
-#se_model <- ses(Beef_data.tsibble, h = 12)
-#summary(se_model)
-```
-
 --------------------------------------------
 ### Forecast a Time Series Regression Model
 --------------------------------------------
 
-
-```{r}
-TOTAL <- merge(Beef_data.tsibble, Beef_US_price.tsibble, by = 'DATE')
-TOTAL$US_beef_price <- TOTAL$US_beef_price*100
-```
-
-```{r}
-ggplot(TOTAL, aes(x=DATE)) + 
-  geom_line(aes(y = US_beef_price), color = "darkred") + 
-  geom_line(aes(y = Global_price_of_beef), color="steelblue")
-
-plot(TOTAL)
-
-```
-Can already make the assumption of positive correlation between **Global_price_of_beef** and **US_beef_price**
-
-```{r}
-#Beef_US_Comp <- decompose(Beef_US_price.tsibble)
-
-#time series has no or less than 2 periods
-```
-
+Average Price: Ground Beef, 100% Beef (Cost per Pound/453.6 Grams) in U.S. City Average
 
 ------------------------------------------------
 
@@ -406,221 +277,254 @@ Can already make the assumption of positive correlation between **Global_price_o
 # Global_price_of_beef VS DATE
 
 ```{r}
-mod0 <- lm(Global_price_of_beef~ DATE, data = TOTAL)
+mod0 <- lm(US_beef_price ~ DATE, data = Beef_US_price)
 summary(mod0)
 ```
-According to the regression mod0, each month, the Global price of beef would increase of 0.01180 .
+According to the regression mod0, each month, the  price of beef would increase of 2.31e-04 dollars .
+
+---------------------------------------------------------------------------------------------------------------
 
 
-## Link: Global_price_of_beef VS US_beef_price
+
+## Graphical representation of  US_beef_price VS production and Consumption and Corn Price
+
 
 ```{r}
-cor(TOTAL$Global_price_of_beef,TOTAL$US_beef_price)
-```
-The correlation between the Global price and the US price is almost perfectly linear: 0.932, it is surely because the Global price of beef takes into account the price of the largest expeditors of beef, principaly based in the US. 
+Annual_US_beef.price <- Beef_US_price
+Annual_US_beef.price$DATE <- as.Date(Annual_US_beef.price$DATE )
+Annual_US_beef.price$Year <- year(Annual_US_beef.price$DATE)
+Annual_US_beef.price$Year <- format(Annual_US_beef.price$DATE,format="%Y")
+Annual_US_beef.price <- aggregate(US_beef_price ~ Year, Annual_US_beef.price, mean)
+Annual_US_beef.price[2] <- Annual_US_beef.price[2]*100
 
-```{r}
-mod1 <- lm(Global_price_of_beef~ US_beef_price, data = TOTAL)
-summary(mod1)
-plot(mod1)
-```
-Now that we know that the Global price of beef is significantly impacted by the US beef price, we are going to focus on the US_beef production. Moreover, the residuals look well distributed against the fitted values. 
+Annual_US_beef.price$Year <- as.Date(as.character(Annual_US_beef.price$Year), format = "%Y")
 
+Annual_US_beef.price.ts <- Annual_US_beef.price %>%
+  mutate(Year = year(Year)) %>%
+  as_tsibble(index = Year)
 
-## Graphical representation of Global_price_of_beef VS US_beef_price
-
-```{r}
-ggplot(TOTAL,
-aes(x = Global_price_of_beef,
-y = US_beef_price)) + geom_point()+
-    geom_smooth(method="lm", se=TRUE)
+Annual_US_beef.price.ts %>% autoplot()
+names(Annual_US_beef.price.ts)[1] <- 'DATE'
 ```
 
 
 
-### Merging the  Price VS Production
+### Merging in Total
 
 Is there a link between the annual price and the annual production of beef ? Our assumption is: the more the production increases, it means the demand is higher. Therefore the more the price should increase
 ```{r}
-Tab2 <- merge(Beef_price_annual.tsibble, Beef_US_production.tsibble, by = 'DATE')
+Total <- merge(Annual_US_beef.price.ts, Beef_US_production.tsibble, by = 'DATE')
+Total <- merge(US_Beef_consumption.ts, Total, by = 'DATE')
+Total[4] <- Total[4]/100000
+```
+
+```{r}
+v = c(Total$DATE)
+Total$DATE <- as.Date(paste(v), format("%Y"))
+
+Total.ts <- Total %>%
+  as_tsibble(index = DATE)
+
+```
+
+
+
+```{r}
+Total %>% GGally::ggpairs(columns = 2:4)
 ```
 
 
 ```{r}
-cor(Tab2)
+fitTSLM <-  Total.ts %>% model(TSLM(US_beef_price ~ US_beef_production + US_beef_consumption )) %>%
+report()
 ```
-We can observe that the annual price of beef if linearly correlated (0.788) to the time (DATE) but slightly to the annual production...
 
-# Graphical representation of  Price VS Production
 ```{r}
-ggplot(Tab2,
-aes(x = US_beef_production,
-y = Annual_beef_price)) + geom_point()+
-    geom_smooth(method="lm", se=TRUE)
+fitTSLM2 <-  Total.ts %>% model(TSLM(US_beef_price ~ US_beef_production)) %>%
+report()
 ```
-It is a flat line in fact. Cannot conclude with the production...Volatility is also high.
 
-# Correlation  Price VS Production
 ```{r}
-cor(Tab2$Annual_beef_price,Tab2$US_beef_production)
-```
-The correlation is of 0.112, close to 0. Is confirms the flat line
-
-# Regression Price against Production: Price VS Production
-```{r}
-mod2 <- lm(Annual_beef_price ~ US_beef_production,data = Tab2)
+mod2 <- lm(US_beef_price ~ US_beef_production, data = Total.ts)
 summary(mod2)
 ```
-The result is not significant and the R squared adjusted is not satisfying. Therefore only the production is not a reliable component in order to predict the beef price. 
 
-# Regression Price against Production AND Time
 ```{r}
-mod3 <- lm(Annual_beef_price ~ .,data = Tab2)
-summary(mod3)
-```
-Here, the Annual beef price is significantly impacted with time (**DATE**) and production **US_beef_production**, but indeed, as seen before, the Time component plays a big role. It is why the production becomes significant and the R^2 this good (80.2% of the variance explained by this model).
-
-# Regression of the Time serie with TSLM: TSLM (Price ~ Production)
-```{r}
-Tab2.ts <- as_tsibble(Tab2, index = DATE)
-Tab2.ts %>% model(TSLM(Annual_beef_price ~ US_beef_production )) %>%
-report()
-```
-Does not show a strong relationship between the production and the price in US...
-
-## Take a look at the correlation between the corn price in US and the US beef price.
-After the war in Ukraine, we saw a big inflation in the every commodity product price. The rise of the beef price can be also linked with the penury of corn (princally producted in Ukraine) which has impacted the cost of production. We will take a look at the correlation of **US_beef_price** VS **US_corn_price**.
-
-# Merging the dataset : US_beef_price VS US_corn_price.
-```{r}
-tab3 <- merge(Beef_US_price.tsibble, Corn_price_US.tsibble, by = 'DATE')
-tab3$US_beef_price <- tab3$US_beef_price *100
+cor(Total.ts$US_beef_production, Total.ts$US_beef_price)
 ```
 
 ```{r}
-cor(tab3$US_beef_price, tab3$US_corn_price)
-```
-The correlation is of 0.583. Looks incouraging. 
-
-# Graph study: US_beef_price VS US_corn_price
-```{r}
-ggplot(tab3,
-aes(x = US_corn_price,
+ggplot(Total.ts,
+aes(x = US_beef_production,
 y = US_beef_price)) + geom_point()+
-    geom_smooth(method="lm", se=FALSE)
-```
-Positive linear relationship indeed these two variables. 
-
-
-# Regression study: US_beef_price VS US_corn_price
-```{r}
-mod4 <- lm(US_beef_price ~ US_corn_price, data = tab3)
-summary(mod4)
-```
-Significant indeed, but the R^2 is low. 
-
-```{r}
-plot(mod4)
-```
-
-# TSLM study:
-```{r}
-tab3.ts <- as_tsibble(tab3) %>% fill_gaps()
-fitTSLM <-  tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price)) %>%
-report()
-```
-Same results
-
-# Tab of correlation representation/graph
-```{r}
-tab3.ts %>% GGally::ggpairs(columns = 2:3)
-```
-
-# Fitting the values on a graph
-```{r}
-augment(fitTSLM) %>%
-ggplot(aes(x = DATE)) +
-geom_line(aes(y = US_beef_price, colour = "Data")) +
-geom_line(aes(y = .fitted, colour = "Fitted")) + xlab("Year") + ylab(NULL) + guides(colour = guide_legend(title=NULL))
-```
-# Graph of Beef price VS Corn price
-```{r}
-augment(fitTSLM) %>%
-ggplot(aes(x = US_beef_price, y = .fitted)) + geom_point() + ylab("Fitted (predicted values)") + xlab("Data (actual values)") + geom_abline(intercept = 0, slope = 1)
-```
-Representation of how the observations are distributed around the perfect linear line. 
-
-# Graph of Beef price VS Corn price
-```{r}
-tab3 %>%
-  as.data.frame() %>%
-  ggplot(aes(x=US_corn_price, y=US_beef_price)) +
-    ylab("US_beef_price") +
-    xlab("US_corn_price") +
-    geom_point() +
     geom_smooth(method="lm", se=TRUE)
 ```
 
-## Residual study of Beef price VS Corn price
-```{r}
-fitTSLM %>% gg_tsresiduals()
-```
 
-This one does not work
 ```{r}
-checkresiduals(mod4)
-```
-# AIC study
-```{r}
-CV(mod4)
+checkresiduals(mod2)
 ```
 
 
-
-## Cannot make the forecast in the end...
+### Merging in Tot - US Beef Price VS Corn Price
 ```{r}
-#fit_beef <- tab3.ts %>% model(TSLM(US_beef_price ~ US_corn_price))
-#fc <- forecast(mod4)
-
-#fc %>% autoplot(US_beef_price) 
-
+Tot <- merge(Beef_US_price.tsibble, Corn_price_US.tsibble, by = 'DATE')
+Tot <- merge(Tot, Nasdaq.tsibble, by = 'DATE')
+Tot.ts <- as_tsibble(Tot, index = DATE)
 ```
 
 
-fit.US <- tslm(US_beef_price ~ US_corn_price, data = tab3.ts)
-h <- 4
-fcast.ave <- forecast(fit.cons,
-  newdata = data.frame(
-    Income = rep(mean(uschange[,"Income"]), h)))
-fcast.up <- forecast(fit.cons,
-  newdata = data.frame(Income = rep(5, h)))
-autoplot(uschange[, "Consumption"]) +
+```{r}
+cor(Tot.ts$US_corn_price, Tot.ts$US_beef_price)
+```
+
+```{r}
+cor(Tot.ts$Close, Tot.ts$US_beef_price)
+```
+
+
+# TSLM study: US_beef_price ~ Close + US_corn_price + DATE
+```{r}
+fitTSLM3 <-  Tot.ts %>% model(TSLM(US_beef_price ~ Close + US_corn_price + DATE)) %>%
+report()
+mod3 <- lm(US_beef_price~Close + US_corn_price, data = Tot)
+```
+
+
+```{r}
+fitTSLM3 %>% gg_tsresiduals()
+```
+
+```{r}
+fitTSLM4<-  Tot.ts %>% model(TSLM(US_beef_price ~ Close)) %>%
+report()
+```
+
+```{r}
+augment(fitTSLM4) %>%
+ggplot(aes(x = DATE)) +
+geom_line(aes(y = US_beef_price, colour = "US_beef_price")) +
+geom_line(aes(y = .fitted, colour = "Close")) + xlab("Year") + ylab(NULL) + guides(colour = guide_legend(title='Nasdaq index VS US Beef price'))
+```
+
+
+```{r}
+ggplot(Tot.ts,
+aes(x = Close,
+y = US_beef_price)) + geom_point()+
+    geom_smooth(method="lm", se=TRUE)
+```
+
+```{r}
+fitTSLM4 %>% gg_tsresiduals()
+```
+
+
+
+
+
+
+## Corn Price 
+
+```{r}
+fitTSLM5 <-  Tot.ts %>% model(TSLM(US_beef_price ~  US_corn_price)) %>%
+report()
+```
+
+```{r}
+ggplot(Tot.ts,
+aes(x = US_corn_price,
+y = US_beef_price)) + geom_point()+
+    geom_smooth(method="lm", se=TRUE)
+```
+
+
+
+```{r}
+fitTSLM5 %>% gg_tsresiduals()
+```
+
+
+
+## Plotting regression prediction:
+
+```{r}
+fit.price <- tslm(US_beef_price ~ US_corn_price + Close, data = Tot.tsi)
+h <- 12
+
+fcast.down <- forecast(fit.price,
+  newdata = data.frame(US_corn_price = rep(200, h),
+                       Close= rep(10000,h)))
+
+fcast.up <- forecast(fit.price,
+  newdata = data.frame(US_corn_price = rep(350, h),
+                       Close= rep(12000,h)))
+
+autoplot(Tot.tsi[, "US_beef_price"])+
   ylab("% change in US consumption") +
-  autolayer(fcast.ave, series = "Average increase",
+  autolayer(fcast.down, series = "down",
     PI = TRUE) +
-  autolayer(fcast.up, series = "Extreme increase",
+  autolayer(fcast.up, series = "up",
     PI = TRUE) +
   guides(colour = guide_legend(title = "Scenario"))
 
-
-
-tab3.ts
-
-
-```{r}
-
-```
-```{r}
-
-```
-
-
-```{r}
-
 ```
 
 ```{r}
+fit.price <- tslm(US_beef_price ~ US_corn_price, data = Tot.tsi)
+h <- 12
+
+fcast.down <- forecast(fit.price, newdata = data.frame(US_corn_price = rep(150, h)))
+
+fcast.up <- forecast(fit.price, newdata = data.frame(US_corn_price = rep(350, h)))
+
+autoplot(Tot.tsi[, "US_beef_price"])+
+  ylab("US_beef_price") +
+  autolayer(fcast.down, series = "down",
+    PI = TRUE) +
+  autolayer(fcast.up, series = "up",
+    PI = TRUE) +
+  guides(colour = guide_legend(title = "Scenario"))
 
 ```
+
+
+
+
+```{r}
+Tot.tsi <- ts(Tot, start=c(1990,1), end=c(2021, 11), frequency = 12)
+```
+
+
+##Covariance matrix
+
+```{r}
+cov(Tot[2:4])
+```
+The values along the diagonals of the matrix are simply the variances for each obsvervation:
+
+The other values in the matrix represent the covariances between the various time series observations:
+
+A positive number for covariance indicates that two variables tend to increase or decrease simultaneously.
+For example, US_beef_price and Close have a positive covariance (246054), which indicates that observation that score high on Close also tend to score high on US_beef_price.
+
+--------------------------------------------------------------
+
+## Cross correlation:
+
+
+```{r}
+print(ccf(Corn_price_US.tsibble, Beef_US_price.tsibble))
+```
+
+This tells us that the correlation is higest at a lag of -1.833 month.
+
+
+````{r}
+print(ccf(Nasdaq.tsibble, Beef_US_price.tsibble))
+```
+
+
+--------------------------------------------------------------------------------------
 
 
