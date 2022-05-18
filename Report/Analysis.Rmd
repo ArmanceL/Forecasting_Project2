@@ -449,6 +449,11 @@ fitTSLM5 %>% gg_tsresiduals()
 ## Plotting regression prediction:
 
 ```{r}
+Tot.tsi <- ts(Tot, start=c(1990,1), end=c(2021, 11), frequency = 12)
+```
+
+
+```{r}
 fit.price <- tslm(US_beef_price ~ US_corn_price + Close, data = Tot.tsi)
 h <- 12
 
@@ -486,13 +491,6 @@ autoplot(Tot.tsi[, "US_beef_price"])+
     PI = TRUE) +
   guides(colour = guide_legend(title = "Scenario"))
 
-```
-
-
-
-
-```{r}
-Tot.tsi <- ts(Tot, start=c(1990,1), end=c(2021, 11), frequency = 12)
 ```
 
 
