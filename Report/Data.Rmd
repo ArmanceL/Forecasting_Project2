@@ -8,23 +8,26 @@ date: '2022-05-03'
 source("../scripts/setup.R")
 ```
 
-## Analysis of the general price of beef 
+## Analysis of the price of beef in the US
 
 Importation of the dataset:
 - Price 
 - Monthly data
-- Start from 1990 to 2021
+- Start from 1986 to 2021
+
 
 ```{r}
 Beef_data <- read.csv2("../Data/BeefPrice.csv")
 Commodity_Price_index <- read.csv("../Data/Commodity.price.index.csv")
 Beef_production_world <- read.csv("../Data/beef-and-buffalo-meat-production-tonnes.csv")
 Beef_US_price <- read.csv("../Data/Beef_price_US.csv")
-Beef_price_annual <- read.csv('../Data/Beef_price_annual.csv')
 Corn_price_US <- read.csv('../Data/corn_price_US.csv')
 Corn_price <- read_delim('../Data/corn-prices-historical-chart-data.csv', 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 Beef_consumption <- read_csv('../Data/Beef_consumption.csv')
+Nasdaq <- read.csv('../Data/^NDX.csv') 
 ```
+
+
 
 
