@@ -8,6 +8,14 @@ date: '2022-05-03'
 source(here::here("scripts/setup.R"))
 ```
 
+-------------------------------------------------------------------
+
+NOUVEAU / EDA
+
+-------------------------------------------------------------------
+
+
+
 # Exploratory Data Analysis 
 
 Let's import the dataset. 
@@ -21,6 +29,7 @@ Corn_price_US <- read.csv('../Data/corn_price_US.csv')
 Corn_price <- read_delim('../Data/corn-prices-historical-chart-data.csv', 
     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 Beef_consumption <- read_csv('../Data/Beef_consumption.csv')
+Nasdaq <- read.csv('../Data/^NDX.csv') 
 ```
 
 
@@ -39,10 +48,6 @@ which(is.na(Commodity_Price_index))
 which(is.na(Beef_production_world))
 which(is.na(Beef_US_price))
 ```
-no missing values
-...
-...
-...
 
 
 ```{r}
@@ -86,13 +91,15 @@ Beef_US_price$DATE<- as.Date(Beef_US_price$DATE, format = "%Y-%m-%d")
 
 
 Beef_US_price.tsibble <- Beef_US_price %>%
-  na.omit()%>%
+  na_interpolation()%>%
   mutate(DATE = yearmonth(DATE)) %>%
   as_tsibble(index = DATE)
 
+library(imputeTS)
+Beef_US_price.tsibble <- na_interpolation(Beef_US_price.tsibble)
+Beef_US_price.tsibble[2] <- Beef_US_price.tsibble[2]*100
+
 ```
-
-
 
 ```{r}
 Beef_US_production <- Beef_production_world %>%
@@ -113,20 +120,7 @@ Beef_US_production.tsibble <- Beef_US_production %>%
   as_tsibble(index = DATE)
 ```
 
-```{r}
-names(Beef_price_annual)[2] <- 'Annual_beef_price'
 
-Beef_price_annual$Annual_beef_price<- as.numeric(Beef_price_annual$Annual_beef_price)
-
-Beef_price_annual$DATE<- as.Date(Beef_price_annual$DATE, format = "%Y")
-
-
-
-Beef_price_annual.tsibble <- Beef_price_annual %>%
-  mutate(DATE = year(DATE)) %>%
-  as_tsibble(index = DATE)
-
-```
 
 ```{r}
 names(Corn_price_US)[2] <- 'US_corn_price'
@@ -177,82 +171,33 @@ US_Beef_consumption.ts <- US_Beef_consumption %>%
   as_tsibble(index = DATE)
 ```
 
--------------------------------------------------------------------
-
-
-
-
-### Plotting the data
-```{r}
-Beef_data.tsibble %>%
-ggplot(aes(x = DATE, y = Global_price_of_beef)) +
-      geom_point(color = "darkorchid4") +
-      labs(title = "Representation of global price of beef",
-           subtitle = "Observations from 1990 to 2021",
-           y = "Price",
-           x = "Date") + theme_bw(base_size = 15)
-```
-```{r}
-#YEAR <- as.numeric(format(Beef_data$DATE,'%Y'))
-#Month <- as.numeric(format(Beef_data$DATE,'%m'))
-```
-
 
 ```{r}
-#Beef_data %>%
-  #na.omit() %>%
-#ggplot(aes(x = DATE, y = Global_price_of_beef)) +
-      #geom_point(color = "darkorchid4") +
-      #facet_wrap( ~ YEAR )+
-      #labs(title = "Price of beef",
-           #subtitle = "Use facets to plot by a variable - year in this case",
-          # y = "Price",
-          #x = "Date") + theme_bw(base_size = 15) +
-     # adjust the x axis breaks
-     #scale_x_date(date_breaks = "5 years", date_labels = "%m-%Y")
+Annual_US_beef.price <- Beef_US_price
+Annual_US_beef.price$DATE <- as.Date(Annual_US_beef.price$DATE )
+Annual_US_beef.price$Year <- year(Annual_US_beef.price$DATE)
+Annual_US_beef.price$Year <- format(Annual_US_beef.price$DATE,format="%Y")
+Annual_US_beef.price <- aggregate(US_beef_price ~ Year, Annual_US_beef.price, mean)
+Annual_US_beef.price[2] <- Annual_US_beef.price[2]*100
+
+Annual_US_beef.price$Year <- as.Date(as.character(Annual_US_beef.price$Year), format = "%Y")
+
+Annual_US_beef.price.ts <- Annual_US_beef.price %>%
+  mutate(Year = year(Year)) %>%
+  as_tsibble(index = Year)
+
+Annual_US_beef.price.ts %>% autoplot()
+names(Annual_US_beef.price.ts)[1] <- 'DATE'
 ```
 
-
 ```{r}
-#Beef_data.ts <- ts(Beef_data, start = 1990, frequency = 12)
-```
-
-
-# Plotting the data Global Price of beef in the world
-```{r}
-Beef_data.tsibble %>% autoplot(Global_price_of_beef)+geom_line()
-```
-
-# Plotting the data of the US beef price
-```{r}
-Beef_US_price.tsibble %>% autoplot(US_beef_price)+geom_line()
-```
-
-# Plotting the data US beef production
-```{r}
-Beef_US_production.tsibble %>% autoplot(US_beef_production)+geom_line()
-```
-
-# Plotting the data US beef production
-```{r}
-Commodity_Price.tsibble %>% autoplot(Price_index)+geom_line()
-```
-We have to be careful, because even if the plot looks similar to the beef price, in the commodity price index, the beef price is also included, so it impacts the price index. 
-
-
-# Plotting the Global Corn price
-```{r}
-Corn_price.tsibble %>% autoplot(log(corn_price))+geom_line()
-```
-
-# Ploting US corn price
-```{r}
-Corn_price_US.tsibble %>% autoplot((US_corn_price))+geom_line()
-```
-
-# Ploting kg/capita US consumption
-```{r}
-US_Beef_consumption.ts%>% autoplot(US_beef_consumption) + geom_line()
+Nasdaq <- read.csv('~/Desktop/^NDX.csv') 
+Nasdaq <- Nasdaq[-c(2:4,6:7)]
+names(Nasdaq)[1] <- 'DATE'
+Nasdaq$DATE <- as.Date(as.character(Nasdaq$DATE), format = "%Y-%m-%d")
+Nasdaq.tsibble <- Nasdaq %>%
+  mutate(DATE = yearmonth(DATE)) %>%
+  as_tsibble(index = DATE)
 ```
 
 
