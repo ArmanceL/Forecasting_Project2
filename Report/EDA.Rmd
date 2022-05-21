@@ -99,6 +99,7 @@ library(imputeTS)
 Beef_US_price.tsibble <- na_interpolation(Beef_US_price.tsibble)
 Beef_US_price.tsibble[2] <- Beef_US_price.tsibble[2]*100
 
+
 ```
 
 ```{r}
@@ -185,10 +186,16 @@ Annual_US_beef.price$Year <- as.Date(as.character(Annual_US_beef.price$Year), fo
 Annual_US_beef.price.ts <- Annual_US_beef.price %>%
   mutate(Year = year(Year)) %>%
   as_tsibble(index = Year)
-
-Annual_US_beef.price.ts %>% autoplot()
 names(Annual_US_beef.price.ts)[1] <- 'DATE'
 ```
+
+## Graphical representation :
+
+
+```{r}
+Beef_US_price.tsibble %>% autoplot(US_beef_price)
+```
+
 
 ```{r}
 Nasdaq <- Nasdaq[-c(2:4,6:7)]
@@ -197,6 +204,9 @@ Nasdaq$DATE <- as.Date(as.character(Nasdaq$DATE), format = "%Y-%m-%d")
 Nasdaq.tsibble <- Nasdaq %>%
   mutate(DATE = yearmonth(DATE)) %>%
   as_tsibble(index = DATE)
+Nasdaq.tsibble %>% autoplot(Close)
 ```
-
+```{r}
+Corn_price_US.tsibble %>% autoplot(US_corn_price)
+```
 

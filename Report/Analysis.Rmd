@@ -9,13 +9,13 @@ source("../scripts/setup.R")
 ```
 
 
+
+
 -------------------------------------------------------------------
 
 NOUVEAU / ANALYSIS
 
 -------------------------------------------------------------------
-
-
 
 
 
@@ -228,6 +228,11 @@ The ETS model (A,A,A) is not significantly improving the most basic forecast NAI
 -----------------------------------------------------------------------------------------------------------------
 
 
+--------------------------------------------
+### Forecast a Time Series with ARIME
+--------------------------------------------
+
+
 #### Non-Stationnary forecast analysis 
 
 # Differencing the data
@@ -240,26 +245,55 @@ Beef_US.diff
 The data transformations of differencing make this time series stationary
 
 
-### AUTO ARIMA model:
+### AUTO ARIMA model: With no missing value
+
+```{r}
+Beef_US_price2 <- Beef_US_price %>%
+  na_interpolation()
+
+beefTS1 = ts(Beef_US_price2)
+arima_fit = auto.arima(beefTS1[,1])
+plot(beefTS1[,2])
+arima_fit1 = auto.arima(beefTS1[,2])
+arima_forecast = forecast(arima_fit1, h = 12)
+plot(arima_forecast)
+
+```
+
+
+
 
 ```{r}
 beefTS = ts(Beef_US_price)
-arima_fit = auto.arima(beefTS[,1])
+arima_fit2 = auto.arima(Beef_US_price[,1])
 plot(beefTS[,2])
-arima_fit = auto.arima(beefTS[,2])
-arima_forecast = forecast(arima_fit, h = 12)
+arima_fit2 = auto.arima(beefTS[,2])
+arima_forecast = forecast(arima_fit2, h = 12)
 plot(arima_forecast)
 ```
 
 ```{r}
-arima_fit %>% accuracy()
+arima_fit1 %>% accuracy()
 ```
-Better accuracy !
+```{r}
+arima_fit2 %>% accuracy()
+```
 
 ```{r}
 Beef_US_price.tsibble %>%
   gg_tsdisplay(difference(US_beef_price), plot_type='partial')
 ```
+```{r}
+fit.arima <- Beef_US_price.tsibble %>%
+  model(ets = ETS(US_beef_price ~ trend("A"),arima = ARIMA(US_beef_price)))
+
+fit.arima
+```
+
+
+
+
+
 
 -------------------------------------------------------------------------------------
 
@@ -418,9 +452,6 @@ y = US_beef_price)) + geom_point()+
 ```{r}
 fitTSLM4 %>% gg_tsresiduals()
 ```
-
-
-
 
 
 
