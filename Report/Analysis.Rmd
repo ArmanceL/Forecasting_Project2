@@ -283,11 +283,19 @@ arima_fit2 %>% accuracy()
 Beef_US_price.tsibble %>%
   gg_tsdisplay(difference(US_beef_price), plot_type='partial')
 ```
+
+
+
+
+
+
+
 ```{r}
 fit.arima <- Beef_US_price.tsibble %>%
   model(ets = ETS(US_beef_price ~ trend("A"),arima = ARIMA(US_beef_price)))
 
 fit.arima
+
 ```
 
 
@@ -555,5 +563,72 @@ print(ccf(Nasdaq.tsibble, Beef_US_price.tsibble))
 
 
 --------------------------------------------------------------------------------------
+
+----------------------------------------------------
+### Forecast a Time Series with DYNAMIC REGRESSION
+----------------------------------------------------
+
+```{r}
+autoplot(Tot.tsi[,2:4], facets = TRUE)
+```
+
+-------------------------------------------------
+
+NOT RELEVANT 
+
+-------------------------------------------------
+
+
+
+```{r}
+(fit.r <- auto.arima(Tot.tsi[,"US_beef_price"],
+  xreg=Tot.tsi[,"US_corn_price"]))
+```
+Equation : 0.835 - 0.021x + nt
+
+```{r}
+cbind("Regression Errors" = residuals(fit.r, type="regression"),
+      "ARIMA errors" = residuals(fit.r, type="innovation")) %>%
+  autoplot(facets=TRUE)
+```
+The regression used for US_Beef price, based on the Corn price is not really efficient, as we can see it cannot explain the variation of the beef price. Arima explains it better with one differentinfg, but it remains some errors. in 2013 and in 2021. 
+
+
+```{r}
+checkresiduals(fit.r)
+```
+
+# With the Nasdaq index 
+```{r}
+(fit.r2 <- auto.arima(Tot.tsi[,"US_beef_price"],
+  xreg=Tot.tsi[,"Close"]))
+```
+
+
+
+-------------------------------------------------
+
+NOW RELEVANT 
+
+-------------------------------------------------
+
+
+BASED ON THE CORN PRICE ARIMA REGRESSION:
+
+```{r}
+fcast <- forecast(fit.r, xreg=rep(mean(Tot.tsi[,2]),12))
+autoplot(fcast) + xlab("Year") +
+  ylab("Percentage change")
+```
+
+```{r}
+xreg <- cbind(US.corn = Tot.tsi[, "US_corn_price"],
+              Nasdaq = Tot.tsi[, "Close"])
+fit <- auto.arima(Tot.tsi[, "US_beef_price"], xreg = xreg)
+
+checkresiduals(fit)
+```
+
+
 
 
